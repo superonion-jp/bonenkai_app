@@ -139,6 +139,26 @@ const BOARD_NAMES = [
 ];
 
 //============================================
+// Initialization
+//============================================
+// let username = sessionStorage.getItem('bingo-username');
+// if (!username) {
+//   username = prompt("Please enter your Bingo username:");
+//   if (!username || !username.trim()) username = "Anonymous";
+//   sessionStorage.setItem('bingo-username', username);
+// }
+
+document.getElementById("question-modal").addEventListener("mousedown", function(e) {
+  if (e.target === this) closeModal();
+});
+
+document.addEventListener("DOMContentLoaded", function(){
+  document.getElementById("chosen-board-name").innerText = BOARD_NAMES[boardIdx];
+  renderBoard();
+});
+
+
+//============================================
 // function to shuffle the 24 number in the Bingo board
 //============================================
 let boardNumbersSet = [];
@@ -245,9 +265,7 @@ window.cellClicked = function(idx) {
   if (!questionNum) return; // center
 
   activeQuestionIdx = questionNum - 1; // This is the index in your questions array!
-
   let qObj = questions[activeQuestionIdx];
-
   currentCellIdx = idx;
 
   document.getElementById("modal-question").innerText = qObj.q;
@@ -264,7 +282,11 @@ window.cellClicked = function(idx) {
   document.getElementById("modal-result").innerText = "";
   document.getElementById("question-modal").style.display = "flex";
 
-  // TIMER LOGIC
+  // Remove old timer display if present
+  let oldTimerElem = document.getElementById("modal-timer");
+  if (oldTimerElem) oldTimerElem.remove();
+
+  // TIMER LOGIC: set countdown *after* modal is shown and always create the timer element before interval
   countdown = 15;
   updateTimerDisplay();
   answerTimer = setInterval(() => {
@@ -346,27 +368,81 @@ window.closeModal = function() {
 function checkBingo() {
   for (let i = 0; i < 5; i++) {
     if ([0,1,2,3,4].map(j => boardState[i*5+j] || questions[i*5+j].q==="FREE").every(Boolean)) {
+      addWinnerNoUser(BOARD_NAMES[boardIdx]);
+      updateWinnersListNoUser();
       setTimeout(() => alert("Bingo! (row)"), 120); return;
     }
     if ([0,1,2,3,4].map(j => boardState[j*5+i] || questions[j*5+i].q==="FREE").every(Boolean)) {
+      addWinnerNoUser(BOARD_NAMES[boardIdx]);
+      updateWinnersListNoUser();
       setTimeout(() => alert("Bingo! (column)"), 120); return;
     }
   }
   if ([0,6,12,18,24].map(idx => boardState[idx] || questions[idx].q==="FREE").every(Boolean)) {
+    addWinnerNoUser(BOARD_NAMES[boardIdx]);
+    updateWinnersListNoUser();
     setTimeout(() => alert("Bingo! (main diagonal)"), 120); return;
   }
   if ([4,8,12,16,20].map(idx => boardState[idx] || questions[idx].q==="FREE").every(Boolean)) {
+    addWinnerNoUser(BOARD_NAMES[boardIdx]);
+    updateWinnersListNoUser();
     setTimeout(() => alert("Bingo! (anti-diagonal)"), 120); return;
   }
 }
 
+
+
 //============================================
-// Modal Background Click
+// Check winner function
 //============================================
-document.getElementById("question-modal").addEventListener("mousedown", function(e) {
-  if (e.target === this) closeModal();
-});
-document.addEventListener("DOMContentLoaded", function(){
-  document.getElementById("chosen-board-name").innerText = BOARD_NAMES[boardIdx];
-  renderBoard();
-});
+// function addWinner(user, boardName) {
+//   let winners = JSON.parse(localStorage.getItem('bingo-winners') || "[]");
+//   // Avoid duplicate wins per user/board
+//   let alreadyWon = winners.find(w => w.user === user && w.board === boardName);
+//   if (!alreadyWon)
+//     winners.push({ user: user, board: boardName, time: new Date().toLocaleString() });
+//   localStorage.setItem('bingo-winners', JSON.stringify(winners));
+// }
+
+// function updateWinnersList() {
+//   let winners = JSON.parse(localStorage.getItem('bingo-winners') || "[]");
+//   if (winners.length === 0) {
+//     document.getElementById("bingo-winners-list").innerHTML = "No Bingos yet!";
+//     return;
+//   }
+//   let html = "<b>Bingo Winners:</b><ul>";
+//   winners.forEach(w =>
+//     html += `<li>${w.user} (${w.board}) at ${w.time}</li>`
+//   );
+//   html += "</ul>";
+//   document.getElementById("bingo-winners-list").innerHTML = html;
+// }
+
+
+function addWinnerNoUser(boardName) {
+  let winners = JSON.parse(localStorage.getItem('bingo-winners') || "[]");
+  // Avoid duplicate wins for the board
+  let alreadyWon = winners.find(w => w.board === boardName);
+  if (!alreadyWon)
+    winners.push({ board: boardName, time: new Date().toLocaleString() });
+  localStorage.setItem('bingo-winners', JSON.stringify(winners));
+}
+
+function updateWinnersListNoUser() {
+  let winners = JSON.parse(localStorage.getItem('bingo-winners') || "[]");
+  if (winners.length === 0) {
+    document.getElementById("bingo-winners-list").innerHTML = "No Bingos yet!";
+    return;
+  }
+  let html = "<b>Bingo Records:</b><ul>";
+  winners.forEach(w =>
+    html += `<li>${w.board} at ${w.time}</li>`
+  );
+  html += "</ul>";
+  document.getElementById("bingo-winners-list").innerHTML = html;
+}
+
+
+// Call once on load, and after every Bingo
+// In checkBingo() after Bingo alert/setTimeout, call: updateWinnersList();
+document.addEventListener("DOMContentLoaded", updateWinnersListNoUser);
