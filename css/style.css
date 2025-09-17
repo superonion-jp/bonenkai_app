@@ -1,30 +1,172 @@
-body { font-family: Arial, sans-serif; margin: 2em; background: #f7f7f7; }
-h2 { text-align: center; }
-#bingo-board table { border-collapse: collapse; margin: 20px auto; }
+body {
+  font-family: Arial, sans-serif;
+  margin: 2em;
+  background: #f7f7f7;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+h2 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 0.8em;
+}
+
+#bingo-board table {
+  border-collapse: collapse;
+  margin: 20px auto;
+  width: 99vw;
+  max-width: 350px;
+}
 #bingo-board td {
-  width: 65px; height: 65px; border: 1px solid #999;
-  text-align: center; vertical-align: middle; font-size: 1.08em;
-  cursor: pointer; background: #fff; transition: background 0.2s;
+  width: 65px;
+  height: 65px;
+  min-width: 48px;
+  min-height: 48px;
+  border: 1px solid #999;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 1.18em;
+  cursor: pointer;
+  background: #fff;
+  transition: background 0.2s;
+  user-select: none;
+  touch-action: manipulation;
+  border-radius: 6px;
 }
-#bingo-board td.open { background: #a2ffa9; color: #022; font-weight: bold; }
-#bingo-board td:hover { background: #eaffea; }
-#bingo-board td.attempted { background: #ffdddd; color: #800; font-weight: bold; }
+#bingo-board td.open {
+  background: #a2ffa9;
+  color: #022;
+  font-weight: bold;
+  border-color: #48a848;
+}
+#bingo-board td.attempted {
+  background: #ffdddd;
+  color: #800;
+  font-weight: bold;
+  border-color: #e66;
+}
+#bingo-board td:hover, #bingo-board td:active {
+  background: #eaffea;
+  border-color: #65ee65;
+}
+#bingo-board {
+  margin-bottom: 1.4em;
+}
+
+button {
+  margin: 0.5em;
+  padding: 10px 16px;
+  font-size: 1.15em;
+  border-radius: 6px;
+  border: 1px solid #bbc;
+  background: #f8f8f8;
+  cursor: pointer;
+  min-width: 120px;
+  user-select: none;
+  transition: background 0.2s;
+}
+button:active {
+  background: #dbffe5;
+}
+
+label {
+  cursor: pointer;
+  font-size: 1.18em;
+  padding-left: 7px;
+  user-select: none;
+}
+
+.choice-radio {
+  margin: 13px 0 13px 0;
+  display: flex;
+  align-items: center;
+  justify-content: left;
+}
+
 #question-modal {
-  display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.2); z-index: 20;
-  align-items: center; justify-content: center;
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.32);
+  z-index: 20;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
+
 #modal-content {
-  background: #fff; border-radius: 8px; box-shadow: 0 4px 28px #0003;
-  max-width: 350px; margin: 50px auto; padding: 25px 23px 18px 23px; text-align: center; position: relative;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 28px #0003;
+  max-width: 350px;
+  width: 93vw;
+  margin: 48px auto;
+  padding: 26px 17px 16px 17px;
+  text-align: center;
+  position: relative;
+  box-sizing: border-box;
 }
-#modal-question { font-weight: bold; margin-bottom: 15px; }
-#modal-result { height: 22px; margin-top: 9px; color: #278b22; }
-button { margin: 0.5em; padding: 6px 14px; border-radius: 4px; border: 1px solid #bbc; background: #f8f8f8; cursor: pointer; }
-button:active { background: #dbffe5; }
-label { cursor: pointer; }
-.choice-radio { margin: 9px 0 9px 0; display: block; }
+
+#modal-question {
+  font-weight: bold;
+  margin-bottom: 17px;
+  font-size: 1.18em;
+}
+
+#modal-timer {
+  margin-bottom:7px;
+  color:#c00;
+  font-weight:bold;
+  font-size: 1.08em;
+}
+
+#modal-result {
+  height: 22px;
+  margin-top: 9px;
+  color: #278b22;
+  min-height: 20px;
+  font-size: 1em;
+}
+
+#chosen-board-name {
+  text-align:center;
+  margin:10px 0;
+  font-weight:bold;
+  font-size: 1.13em;
+}
+
+/* MOBILE and SMALL SCREEN OPTIMIZATION */
 @media (max-width: 499px) {
-  #modal-content { width: 94vw;  }
-  #bingo-board td { width: 13vw; height: 13vw;}
+  h2 {
+    font-size: 1.5rem;
+  }
+  #bingo-board table {
+    max-width: 98vw;
+  }
+  #bingo-board td {
+    width: 14vw;
+    height: 14vw;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 1em;
+    border-radius: 8px;
+  }
+  #modal-content {
+    width: 97vw;
+    margin: 22vw auto;
+    padding: 17px 6vw 11px 6vw;
+    font-size: 1em;
+  }
+  button {
+    padding: 12px 0;
+    width: 98vw;
+    font-size: 1.2em;
+    margin: 0.7em 0;
+  }
+  .choice-radio label {
+    font-size: 1em;
+    padding-left: 6px;
+  }
 }
