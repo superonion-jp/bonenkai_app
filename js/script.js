@@ -197,6 +197,8 @@ let displayNumbers = boardNumbersSet[boardIdx];
 let currentCellIdx = null;
 let answerTimer = null;
 let countdown = 0;
+let activeQuestionIdx = null; // global
+
 
 function selectBoard(idx) {
   boardIdx = idx;
@@ -239,16 +241,15 @@ function renderBoard() {
 //============================================
 window.cellClicked = function(idx) {
   if (attemptedCells[idx] || idx === 12) return;
+  let questionNum = displayNumbers[idx];
+  if (!questionNum) return; // center
 
-  // Get actual question via number label!
-  let questionNum = displayNumbers[idx]; // 1..24
-  if (!questionNum) return; // center or error
+  activeQuestionIdx = questionNum - 1; // This is the index in your questions array!
 
-  let qObj = questions[questionNum - 1];
+  let qObj = questions[activeQuestionIdx];
 
   currentCellIdx = idx;
 
-  // Build modal (unchanged except for questions lookup)
   document.getElementById("modal-question").innerText = qObj.q;
   let form = document.getElementById("choices-form"); form.innerHTML = "";
   qObj.choices.forEach((choice, i) => {
@@ -259,6 +260,7 @@ window.cellClicked = function(idx) {
                      <label for="${id}">${choice}</label>`;
     form.appendChild(div);
   });
+
   document.getElementById("modal-result").innerText = "";
   document.getElementById("question-modal").style.display = "flex";
 
@@ -311,7 +313,7 @@ window.submitAnswer = function() {
     answerTimer = null;
     updateTimerDisplayEnd();
   }
-  let correctAnswer = questions[currentCellIdx].answer.trim().toLowerCase();
+  let correctAnswer = questions[activeQuestionIdx].answer.trim().toLowerCase();
   attemptedCells[currentCellIdx] = true;
   if (selected.trim().toLowerCase() === correctAnswer) {
     boardState[currentCellIdx] = true;
