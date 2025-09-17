@@ -1,5 +1,6 @@
-// Five Boards: fill with your real questions (24 per board, center is auto "FREE")
-// Here are example questions for demo purposes
+//============================================
+// Questions for five Bingo Boards/Sections (24 per board, center is auto "FREE")
+//============================================
 const BOARDS = [
   [
     {q: "3+5=?", answer: "8", choices: ["8", "9", "7", "5"]},
@@ -27,7 +28,6 @@ const BOARDS = [
     {q: "Opposite of up?", answer: "down", choices: ["down","below","over","front"]},
     {q: "Clouds made of...?", answer: "water", choices: ["ice","air","dust","water"]}
   ],
-  // Copy the structure and fill 24 questions for each additional board!
   [
     {q: "7x3=?", answer: "21", choices: ["18", "21", "24", "27"]},
     {q: "Smallest planet?", answer: "Mercury", choices: ["Venus","Mars","Mercury","Jupiter"]},
@@ -133,9 +133,12 @@ const BOARDS = [
     {q: "Green fruit is a...?", answer: "kiwi", choices: ["kiwi","banana","apple","grape"]}
   ]
 ];
+// Board name
 const BOARD_NAMES = [
   "Board 1","Board 2","Board 3","Board 4","Board 5"
 ];
+
+// function to shuffle the 24 number in the Bingo board
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -148,7 +151,10 @@ let attemptedCellsSet = [];
 let questionsSet = [];
 let boardIdx = 0;
 const FREE_CELL = {q: "FREE", answer: "", choices: []};
-// Session Storage or New
+
+//============================================
+// Session management 
+//============================================
 if (sessionStorage.getItem("bingo-numbers")) {
   boardNumbersSet   = JSON.parse(sessionStorage.getItem("bingo-numbers"));
   boardStateSet     = JSON.parse(sessionStorage.getItem("bingo-boardState"));
@@ -177,6 +183,10 @@ questionsSet = BOARDS.map(b => {
   q.splice(12,0,FREE_CELL);
   return q;
 });
+
+//============================================
+// Render the Bingo Board
+//============================================
 let questions      = questionsSet[boardIdx];
 let boardState     = boardStateSet[boardIdx];
 let attemptedCells = attemptedCellsSet[boardIdx];
@@ -280,3 +290,95 @@ document.addEventListener("DOMContentLoaded", function(){
   document.getElementById("chosen-board-name").innerText = BOARD_NAMES[boardIdx];
   renderBoard();
 });
+
+//============================================
+// Add user input limitation for 15 seconda
+//============================================
+let answerTimer = null;        // ← timer reference
+let countdown = 0;             // ← current seconds left
+window.cellClicked = function(idx) {
+  if (attemptedCells[idx] || questions[idx].q === "FREE") return;
+  currentCellIdx = idx;
+  document.getElementById("modal-question").innerText = questions[idx].q;
+  let form = document.getElementById("choices-form"); form.innerHTML = "";
+  questions[idx].choices.forEach((choice, i) => {
+    let id = "choice-" + i;
+    let div = document.createElement("div");
+    div.classList.add("choice-radio");
+    div.innerHTML = `<input type="radio" name="answer" id="${id}" value="${choice}">
+                     <label for="${id}">${choice}</label>`;
+    form.appendChild(div);
+  });
+  document.getElementById("modal-result").innerText = "";
+
+  document.getElementById("question-modal").style.display = "flex";
+
+  // === TIMER LOGIC ===
+  countdown = 15;
+  updateTimerDisplay();
+  answerTimer = setInterval(() => {
+    countdown--;
+    updateTimerDisplay();
+    if (countdown <= 0) {
+      clearInterval(answerTimer);
+      answerTimer = null;
+      attemptedCells[currentCellIdx] = true;
+      document.getElementById("modal-result").innerText = "Time's up!";
+      renderBoard();
+      setTimeout(closeModal, 1000);
+    }
+  }, 1000);
+};
+
+function updateTimerDisplay() {
+  let timerElem = document.getElementById("modal-timer");
+  if (!timerElem) {
+    timerElem = document.createElement("div");
+    timerElem.id = "modal-timer";
+    timerElem.style = "margin-bottom:7px;color:#c00;font-weight:bold;";
+    document.getElementById("modal-question").after(timerElem);
+  }
+  timerElem.innerText = "Time left: " + countdown + " sec";
+}
+
+window.submitAnswer = function() {
+  let radios = document.getElementsByName("answer");
+  let selected = "";
+  for (let r of radios) if (r.checked) { selected = r.value; break; }
+  if (!selected) {
+    document.getElementById("modal-result").innerText = "Please select an answer!"; return;
+  }
+  // === TIMER: stop timer on submit ===
+  if (answerTimer) {
+    clearInterval(answerTimer);
+    answerTimer = null;
+    updateTimerDisplayEnd();
+  }
+  let correctAnswer = questions[currentCellIdx].answer.trim().toLowerCase();
+  attemptedCells[currentCellIdx] = true;
+  if (selected.trim().toLowerCase() === correctAnswer) {
+    boardState[currentCellIdx] = true;
+    document.getElementById("modal-result").innerText = "Correct!";
+    renderBoard();
+    checkBingo();
+    setTimeout(closeModal, 500);
+  } else {
+    document.getElementById("modal-result").innerText = "Wrong! You cannot answer again.";
+    renderBoard();
+    setTimeout(closeModal, 1000);
+  }
+};
+
+window.closeModal = function() {
+  if (answerTimer) {
+    clearInterval(answerTimer);
+    answerTimer = null;
+    updateTimerDisplayEnd();
+  }
+  document.getElementById("question-modal").style.display = "none";
+};
+
+function updateTimerDisplayEnd() {
+  let timerElem = document.getElementById("modal-timer");
+  if (timerElem) timerElem.remove();
+}
