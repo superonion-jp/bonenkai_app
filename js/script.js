@@ -238,10 +238,10 @@ function renderBoard() {
     for (let col = 0; col < 5; col++) {
       let idx = row * 5 + col;
       let cellLabel;
-      if (boardState[idx]) cellLabel = "✔️";
-      else if (idx === 12) cellLabel = "✔️";
+      if (idx === 12) cellLabel = "LGT"; // <-- Center cell always shows this
+      else if (boardState[idx]) cellLabel = "✔️";
       else if (attemptedCells[idx]) cellLabel = "✖️";
-      else cellLabel = displayNumbers[idx]; // Shuffled number
+      else cellLabel = displayNumbers[idx];
       let cellClass = boardState[idx] ? "open" : attemptedCells[idx] ? "attempted" : "";
       html += `<td class="${cellClass}" onclick="cellClicked(${idx})">${cellLabel || ""}</td>`;
     }
