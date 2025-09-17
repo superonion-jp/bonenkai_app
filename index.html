@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Multi-Board Bingo Q&A</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Multi-Board Bingo Q&amp;A</h2>
+  <div style="text-align:center;">
+    <button onclick="selectBoard(0)">Board 1</button>
+    <button onclick="selectBoard(1)">Board 2</button>
+    <button onclick="selectBoard(2)">Board 3</button>
+    <button onclick="selectBoard(3)">Board 4</button>
+    <button onclick="selectBoard(4)">Board 5</button>
+  </div>
+  <div id="chosen-board-name" style="text-align:center; margin:10px 0; font-weight:bold;"></div>
+  <div id="bingo-board"></div>
+  <!-- Modal for questions -->
+  <div id="question-modal">
+    <div id="modal-content">
+      <div id="modal-question"></div>
+      <form id="choices-form"></form>
+      <button type="button" onclick="submitAnswer()">Submit</button>
+      <button type="button" onclick="closeModal()">Close</button>
+      <div id="modal-result"></div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
