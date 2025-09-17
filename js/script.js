@@ -3,8 +3,8 @@
 //============================================
 const BOARDS = [
   [
-    {q: "3+5=?", answer: "8", choices: ["8", "9", "7", "5"]},
-    {q: "Planet with rings?", answer: "Saturn", choices: ["Mars","Jupiter","Saturn","Venus"]},
+    {q: "What is the capital city of Liechtenstein? / リヒテンシュタインの首都は？", answer: "Vaduz", choices: ["Bendern","Vaduz","Zurich","Paris"]},
+    {q: "What is the offical language of Liechtenstein? / リヒテンシュタインの公用語は？", answer: "Standard German", choices: ["Standard German","Swiss German","French","Italian"]},
     {q: "First letter of English?", answer: "a", choices: ["b","z","a","j"]},
     {q: "9-4=?", answer: "5", choices: ["2","5","6","9"]},
     {q: "Primary color?", answer: "red", choices: ["black","red","purple","gray"]},
@@ -135,23 +135,25 @@ const BOARDS = [
 ];
 // Board name
 const BOARD_NAMES = [
-  "Board 1","Board 2","Board 3","Board 4","Board 5"
+  "Liechtenstein","Board 2","Board 3","Board 4","Board 5"
 ];
 
+//============================================
 // function to shuffle the 24 number in the Bingo board
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-}
-
+//============================================
 let boardNumbersSet = [];
 let boardStateSet = [];
 let attemptedCellsSet = [];
 let questionsSet = [];
 let boardIdx = 0;
 const FREE_CELL = {q: "FREE", answer: "", choices: []};
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
 
 if (sessionStorage.getItem("bingo-numbers")) {
   boardNumbersSet   = JSON.parse(sessionStorage.getItem("bingo-numbers"));
@@ -160,10 +162,11 @@ if (sessionStorage.getItem("bingo-numbers")) {
   boardIdx          = JSON.parse(sessionStorage.getItem("bingo-boardIndex")) || 0;
 } else {
   for (let b = 0; b < 5; b++) {
+    // Only shuffle display numbers
     let nums = [];
     for (let i = 1; i <= 24; i++) nums.push(i);
     shuffle(nums);
-    nums.splice(12, 0, null); // center
+    nums.splice(12, 0, null); // Put null for center "FREE"
     boardNumbersSet.push(nums);
     let state = Array(25).fill(false); state[12] = true;
     let attempted = Array(25).fill(false); attempted[12] = true;
@@ -176,12 +179,17 @@ if (sessionStorage.getItem("bingo-numbers")) {
   sessionStorage.setItem("bingo-attemptedCells", JSON.stringify(attemptedCellsSet));
   sessionStorage.setItem("bingo-boardIndex", JSON.stringify(boardIdx));
 }
+
 questionsSet = BOARDS.map(b => {
   let q = b.slice();
-  q.splice(12,0,FREE_CELL);
+  q.splice(12,0,FREE_CELL); // Insert free cell at center
   return q;
 });
 
+
+//============================================
+// Render the Bingo Board
+//============================================
 let questions      = questionsSet[boardIdx];
 let boardState     = boardStateSet[boardIdx];
 let attemptedCells = attemptedCellsSet[boardIdx];
@@ -190,9 +198,6 @@ let currentCellIdx = null;
 let answerTimer = null;
 let countdown = 0;
 
-//============================================
-// Render the Bingo Board
-//============================================
 function selectBoard(idx) {
   boardIdx = idx;
   questions      = questionsSet[idx];
@@ -212,11 +217,11 @@ function renderBoard() {
       let idx = row * 5 + col;
       let cellLabel;
       if (boardState[idx]) cellLabel = "✔️";
-      else if (questions[idx].q === "FREE") cellLabel = "✔️";
+      else if (idx === 12) cellLabel = "✔️";
       else if (attemptedCells[idx]) cellLabel = "✖️";
-      else cellLabel = displayNumbers[idx];
+      else cellLabel = displayNumbers[idx]; // Shuffled number
       let cellClass = boardState[idx] ? "open" : attemptedCells[idx] ? "attempted" : "";
-      html += `<td class="${cellClass}" onclick="cellClicked(${idx})">${cellLabel}</td>`;
+      html += `<td class="${cellClass}" onclick="cellClicked(${idx})">${cellLabel || ""}</td>`;
     }
     html += '</tr>';
   }
@@ -233,16 +238,20 @@ function renderBoard() {
 // Timer and Modal Logic
 //============================================
 window.cellClicked = function(idx) {
-  if (attemptedCells[idx] || questions[idx].q === "FREE") return;
+  if (attemptedCells[idx] || idx === 12) return;
+
+  // Get actual question via number label!
+  let questionNum = displayNumbers[idx]; // 1..24
+  if (!questionNum) return; // center or error
+
+  let qObj = questions[questionNum - 1];
+
   currentCellIdx = idx;
 
-  // Remove old timer display if present
-  let oldTimerElem = document.getElementById("modal-timer");
-  if (oldTimerElem) oldTimerElem.remove();
-
-  document.getElementById("modal-question").innerText = questions[idx].q;
+  // Build modal (unchanged except for questions lookup)
+  document.getElementById("modal-question").innerText = qObj.q;
   let form = document.getElementById("choices-form"); form.innerHTML = "";
-  questions[idx].choices.forEach((choice, i) => {
+  qObj.choices.forEach((choice, i) => {
     let id = "choice-" + i;
     let div = document.createElement("div");
     div.classList.add("choice-radio");
@@ -250,7 +259,6 @@ window.cellClicked = function(idx) {
                      <label for="${id}">${choice}</label>`;
     form.appendChild(div);
   });
-
   document.getElementById("modal-result").innerText = "";
   document.getElementById("question-modal").style.display = "flex";
 
