@@ -145,6 +145,7 @@ function shuffle(array) {
     [array[i], array[j]] = [array[j], array[i]];
   }
 }
+
 let boardNumbersSet = [];
 let boardStateSet = [];
 let attemptedCellsSet = [];
@@ -152,9 +153,6 @@ let questionsSet = [];
 let boardIdx = 0;
 const FREE_CELL = {q: "FREE", answer: "", choices: []};
 
-//============================================
-// Session management 
-//============================================
 if (sessionStorage.getItem("bingo-numbers")) {
   boardNumbersSet   = JSON.parse(sessionStorage.getItem("bingo-numbers"));
   boardStateSet     = JSON.parse(sessionStorage.getItem("bingo-boardState"));
@@ -184,17 +182,19 @@ questionsSet = BOARDS.map(b => {
   return q;
 });
 
-//============================================
-// Render the Bingo Board
-//============================================
 let questions      = questionsSet[boardIdx];
 let boardState     = boardStateSet[boardIdx];
 let attemptedCells = attemptedCellsSet[boardIdx];
 let displayNumbers = boardNumbersSet[boardIdx];
 let currentCellIdx = null;
+let answerTimer = null;
+let countdown = 0;
+
+//============================================
+// Render the Bingo Board
+//============================================
 function selectBoard(idx) {
   boardIdx = idx;
-  // Switch all references to this board
   questions      = questionsSet[idx];
   boardState     = boardStateSet[idx];
   attemptedCells = attemptedCellsSet[idx];
@@ -203,6 +203,7 @@ function selectBoard(idx) {
   document.getElementById("chosen-board-name").innerText = BOARD_NAMES[idx];
   renderBoard();
 }
+
 function renderBoard() {
   let html = '<table>';
   for (let row = 0; row < 5; row++) {
@@ -221,15 +222,24 @@ function renderBoard() {
   }
   html += '</table>';
   document.getElementById("bingo-board").innerHTML = html;
-  // Persist all state
+
   sessionStorage.setItem("bingo-numbers", JSON.stringify(boardNumbersSet));
   sessionStorage.setItem("bingo-boardState", JSON.stringify(boardStateSet));
   sessionStorage.setItem("bingo-attemptedCells", JSON.stringify(attemptedCellsSet));
   sessionStorage.setItem("bingo-boardIndex", JSON.stringify(boardIdx));
 }
+
+//============================================
+// Timer and Modal Logic
+//============================================
 window.cellClicked = function(idx) {
   if (attemptedCells[idx] || questions[idx].q === "FREE") return;
   currentCellIdx = idx;
+
+  // Remove old timer display if present
+  let oldTimerElem = document.getElementById("modal-timer");
+  if (oldTimerElem) oldTimerElem.remove();
+
   document.getElementById("modal-question").innerText = questions[idx].q;
   let form = document.getElementById("choices-form"); form.innerHTML = "";
   questions[idx].choices.forEach((choice, i) => {
@@ -240,80 +250,11 @@ window.cellClicked = function(idx) {
                      <label for="${id}">${choice}</label>`;
     form.appendChild(div);
   });
+
   document.getElementById("modal-result").innerText = "";
   document.getElementById("question-modal").style.display = "flex";
-};
-window.submitAnswer = function() {
-  let radios = document.getElementsByName("answer");
-  let selected = "";
-  for (let r of radios) if (r.checked) { selected = r.value; break; }
-  if (!selected) {
-    document.getElementById("modal-result").innerText = "Please select an answer!"; return;
-  }
-  let correctAnswer = questions[currentCellIdx].answer.trim().toLowerCase();
-  attemptedCells[currentCellIdx] = true;
-  if (selected.trim().toLowerCase() === correctAnswer) {
-    boardState[currentCellIdx] = true;
-    document.getElementById("modal-result").innerText = "Correct!";
-    renderBoard();
-    checkBingo();
-    setTimeout(closeModal, 500);
-  } else {
-    document.getElementById("modal-result").innerText = "Wrong! You cannot answer again.";
-    renderBoard();
-    setTimeout(closeModal, 1000);
-  }
-};
-window.closeModal = function() {
-  document.getElementById("question-modal").style.display = "none";
-};
-function checkBingo() {
-  for (let i = 0; i < 5; i++) {
-    if ([0,1,2,3,4].map(j => boardState[i*5+j] || questions[i*5+j].q==="FREE").every(Boolean)) {
-      setTimeout(() => alert("Bingo! (row)"), 120); return;
-    }
-    if ([0,1,2,3,4].map(j => boardState[j*5+i] || questions[j*5+i].q==="FREE").every(Boolean)) {
-      setTimeout(() => alert("Bingo! (column)"), 120); return;
-    }
-  }
-  if ([0,6,12,18,24].map(idx => boardState[idx] || questions[idx].q==="FREE").every(Boolean)) {
-    setTimeout(() => alert("Bingo! (main diagonal)"), 120); return;
-  }
-  if ([4,8,12,16,20].map(idx => boardState[idx] || questions[idx].q==="FREE").every(Boolean)) {
-    setTimeout(() => alert("Bingo! (anti-diagonal)"), 120); return;
-  }
-}
-document.getElementById("question-modal").addEventListener("mousedown", function(e) {
-  if (e.target === this) closeModal();
-});
-document.addEventListener("DOMContentLoaded", function(){
-  document.getElementById("chosen-board-name").innerText = BOARD_NAMES[boardIdx];
-  renderBoard();
-});
 
-//============================================
-// Add user input limitation for 15 seconda
-//============================================
-let answerTimer = null;        // ← timer reference
-let countdown = 0;             // ← current seconds left
-window.cellClicked = function(idx) {
-  if (attemptedCells[idx] || questions[idx].q === "FREE") return;
-  currentCellIdx = idx;
-  document.getElementById("modal-question").innerText = questions[idx].q;
-  let form = document.getElementById("choices-form"); form.innerHTML = "";
-  questions[idx].choices.forEach((choice, i) => {
-    let id = "choice-" + i;
-    let div = document.createElement("div");
-    div.classList.add("choice-radio");
-    div.innerHTML = `<input type="radio" name="answer" id="${id}" value="${choice}">
-                     <label for="${id}">${choice}</label>`;
-    form.appendChild(div);
-  });
-  document.getElementById("modal-result").innerText = "";
-
-  document.getElementById("question-modal").style.display = "flex";
-
-  // === TIMER LOGIC ===
+  // TIMER LOGIC
   countdown = 15;
   updateTimerDisplay();
   answerTimer = setInterval(() => {
@@ -341,6 +282,14 @@ function updateTimerDisplay() {
   timerElem.innerText = "Time left: " + countdown + " sec";
 }
 
+function updateTimerDisplayEnd() {
+  let timerElem = document.getElementById("modal-timer");
+  if (timerElem) timerElem.remove();
+}
+
+//============================================
+// Answer Submission
+//============================================
 window.submitAnswer = function() {
   let radios = document.getElementsByName("answer");
   let selected = "";
@@ -348,7 +297,7 @@ window.submitAnswer = function() {
   if (!selected) {
     document.getElementById("modal-result").innerText = "Please select an answer!"; return;
   }
-  // === TIMER: stop timer on submit ===
+  // Stop timer
   if (answerTimer) {
     clearInterval(answerTimer);
     answerTimer = null;
@@ -369,6 +318,9 @@ window.submitAnswer = function() {
   }
 };
 
+//============================================
+// Modal Closing Logic
+//============================================
 window.closeModal = function() {
   if (answerTimer) {
     clearInterval(answerTimer);
@@ -378,7 +330,33 @@ window.closeModal = function() {
   document.getElementById("question-modal").style.display = "none";
 };
 
-function updateTimerDisplayEnd() {
-  let timerElem = document.getElementById("modal-timer");
-  if (timerElem) timerElem.remove();
+//============================================
+// Bingo Check Logic
+//============================================
+function checkBingo() {
+  for (let i = 0; i < 5; i++) {
+    if ([0,1,2,3,4].map(j => boardState[i*5+j] || questions[i*5+j].q==="FREE").every(Boolean)) {
+      setTimeout(() => alert("Bingo! (row)"), 120); return;
+    }
+    if ([0,1,2,3,4].map(j => boardState[j*5+i] || questions[j*5+i].q==="FREE").every(Boolean)) {
+      setTimeout(() => alert("Bingo! (column)"), 120); return;
+    }
+  }
+  if ([0,6,12,18,24].map(idx => boardState[idx] || questions[idx].q==="FREE").every(Boolean)) {
+    setTimeout(() => alert("Bingo! (main diagonal)"), 120); return;
+  }
+  if ([4,8,12,16,20].map(idx => boardState[idx] || questions[idx].q==="FREE").every(Boolean)) {
+    setTimeout(() => alert("Bingo! (anti-diagonal)"), 120); return;
+  }
 }
+
+//============================================
+// Modal Background Click
+//============================================
+document.getElementById("question-modal").addEventListener("mousedown", function(e) {
+  if (e.target === this) closeModal();
+});
+document.addEventListener("DOMContentLoaded", function(){
+  document.getElementById("chosen-board-name").innerText = BOARD_NAMES[boardIdx];
+  renderBoard();
+});
