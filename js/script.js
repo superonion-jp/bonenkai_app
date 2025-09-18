@@ -3,8 +3,8 @@
 //============================================
 const BOARDS = [
   [
-    {q: "What is the capital city of Liechtenstein? / リヒテンシュタインの首都は？", answer: "Vaduz", choices: ["Bendern","Vaduz","Zurich","Paris"]},
-    {q: "What is the offical language of Liechtenstein? / リヒテンシュタインの公用語は？", answer: "Standard German", choices: ["Standard German","Swiss German","French","Italian"]},
+    {q: "Longest river?", answer: "Nile", choices: ["Amazon","Nile","Yangtze","Mississippi"]},
+    {q: "Largest island?", answer: "Greenland", choices: ["Sumatra","Australia","Greenland","Iceland"]},
     {q: "First letter of English?", answer: "a", choices: ["b","z","a","j"]},
     {q: "9-4=?", answer: "5", choices: ["2","5","6","9"]},
     {q: "Primary color?", answer: "red", choices: ["black","red","purple","gray"]},
@@ -135,7 +135,7 @@ const BOARDS = [
 ];
 // Board name
 const BOARD_NAMES = [
-  "Liechtenstein","Board 2","Board 3","Board 4","Board 5"
+  "1 - Liechtenstein","2 - Trust Business","3 - IT","4 - Japanese Animation","5 - TEST"
 ];
 
 //============================================
@@ -236,7 +236,7 @@ function renderBoard() {
       let idx = row * 5 + col;
       let cellLabel;
       if (idx === 12) cellLabel = "LGT"; // <-- Center cell always shows this
-      else if (boardState[idx]) cellLabel = "✔️";
+      else if (boardState[idx]) cellLabel = '<span class="checkmark">✔️</span>'; 
       else if (attemptedCells[idx]) cellLabel = "✖️";
       else cellLabel = displayNumbers[idx];
       let cellClass = boardState[idx] ? "open" : attemptedCells[idx] ? "attempted" : "";
