@@ -200,16 +200,12 @@ if (sessionStorage.getItem("bingo-numbers")) {
   sessionStorage.setItem("bingo-boardIndex", JSON.stringify(boardIdx));
 }
 
-questionsSet = BOARDS.map(b => {
-  let q = b.slice();
-  q.splice(12,0,FREE_CELL); // Insert free cell at center
-  return q;
-});
-
 
 //============================================
 // Render the Bingo Board
 //============================================
+questionsSet = BOARDS;
+
 let questions      = questionsSet[boardIdx];
 let boardState     = boardStateSet[boardIdx];
 let attemptedCells = attemptedCellsSet[boardIdx];
@@ -218,6 +214,7 @@ let currentCellIdx = null;
 let answerTimer = null;
 let countdown = 0;
 let activeQuestionIdx = null; // global
+
 
 
 function selectBoard(idx) {
@@ -264,7 +261,7 @@ window.cellClicked = function(idx) {
   let questionNum = displayNumbers[idx];
   if (!questionNum) return; // center
 
-  activeQuestionIdx = questionNum - 1; // This is the index in your questions array!
+  activeQuestionIdx = questionNum - 1; // This is the index of questions array
   let qObj = questions[activeQuestionIdx];
   currentCellIdx = idx;
 
