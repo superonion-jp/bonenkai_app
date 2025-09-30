@@ -135,7 +135,7 @@ const BOARDS = [
 ];
 // Board name
 const BOARD_NAMES = [
-  "1 - Liechtenstein","2 - Trust Business","3 - IT","4 - Japanese Animation","5 - TEST"
+  "1 - Liechtenstein","2 - Trust Business","3 - Technology","4 - Multi culture","5 - Demo"
 ];
 
 //============================================
